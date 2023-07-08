@@ -6,6 +6,19 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/markdown-it@12/dist/markdown-it.min.js"></script>
+    <style>
+        .message {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .message-text {
+            flex-grow: 1;
+        }
+        .delete-button {
+            margin-left: 10px;
+        }
+    </style>
 </head>
 <body class="bg-light">
     <div class="container py-5">
@@ -50,13 +63,23 @@
         }
 
         socket.on('message', function(msg){
-            addMessage(msg);
+            if (msg.delete) {
+                document.getElementById(msg.delete).remove();
+            } else {
+                addMessage(msg);
+            }
         });
 
         function addMessage(msg) {
-            var messageElement = $('<li>').addClass('list-group-item');
-            messageElement.html(md.render(msg));
+            var messageElement = $('<li>').addClass('list-group-item message').attr('id', msg.id);
+            var messageText = $('<div>').addClass('message-text').html(md.render(msg.text));
+            var deleteButton = $('<button>').addClass('btn btn-danger delete-button').text('Delete').attr('onclick', 'deleteMessage(\'' + msg.id + '\')');
+            messageElement.append(messageText).append(deleteButton);
             $('#messages').append(messageElement);
+        }
+
+        function deleteMessage(id) {
+            socket.emit('delete', id);
         }
 
         // Display all historical messages
